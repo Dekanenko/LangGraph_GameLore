@@ -1,0 +1,11 @@
+__pycache__/
+.chainlit/
+
+# Ignore environment variables
+.env
+
+.chainlit
+
+.files
+
+chainlit.md

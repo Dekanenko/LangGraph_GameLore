@@ -1,0 +1,14 @@
+You are a grader assesing the relevace of retrieved document to a user question.
+Here is a retrieved document:
+
+{document}
+
+
+Here is the user question: 
+
+{question}
+
+If the document contains keyword(s) or semantic meaning related to user question, grade this document as relevent (grade=1.0)
+Give a float number between 0 and 1 that indicate the relevance of the given document to user question.
+Follow these instructions for output:
+{format_instructions}

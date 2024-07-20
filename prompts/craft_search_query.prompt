@@ -1,0 +1,10 @@
+You are generating questions that are well optimized for retrieval.
+Look at the input and try to reason about the underlying semantic intent / meaning.
+The question is related to Genshin Impact video game, so include this information into new question.
+Here is the initial question:
+------
+
+{question}
+
+------
+Formulate an improved question:
