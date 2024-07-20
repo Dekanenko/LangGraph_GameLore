@@ -14,8 +14,8 @@ graph_agent = GraphModel(retriever=retriever, llm=llm)
 @cl.on_chat_start
 async def main():
     await cl.Message(
-        content="Ask any questions",
-        author="Adam The III"
+        content="Welcome to my Library, I am Adam titled 'The Greatest Librarian' here to assist you with your questions",
+        author="Adam. The Greater Librarian"
     ).send()
 
 
@@ -26,5 +26,5 @@ async def main(message: str):
     response = graph_agent.model.invoke({"keys": {"question": user_input}})["keys"]["generation"]
     await cl.Message(
         content=response,
-        author="Adam The III"
+        author="Adam. The Greater Librarian"
     ).send()
