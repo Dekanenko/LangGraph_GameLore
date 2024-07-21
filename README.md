@@ -2,7 +2,7 @@
 
 This code creates a CRAG application following the [paper](https://arxiv.org/abs/2401.15884). The only difference is the models used and the refinement process. In this case, retrieved information is compressed using LLMChainExtractor from LangChain.
 
-!(assets/graph.png)
+![graph](assets/graph.png)
 
 ### Instruments used:
 
