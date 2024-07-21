@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 retriever = get_vector_db().as_retriever(search_type="similarity_score_threshold", 
-                                              search_kwargs={"score_threshold": 0.05, "k": 5})
+                                              search_kwargs={"score_threshold": 0.01, "k": 5})
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.1)
 graph_agent = GraphModel(retriever=retriever, llm=llm)
 

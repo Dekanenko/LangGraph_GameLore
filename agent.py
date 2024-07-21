@@ -2,9 +2,13 @@ from langgraph.graph import StateGraph, END
 from langchain.prompts import PromptTemplate
 from langchain_core.output_parsers.string import StrOutputParser
 from langchain_core.output_parsers.pydantic import PydanticOutputParser
+from langchain.output_parsers import RetryWithErrorOutputParser
 from langchain.schema import Document
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain.retrievers.document_compressors.chain_extract import LLMChainExtractor
+from langchain.chains.llm import LLMChain
+from langchain.chains.constitutional_ai.base import ConstitutionalChain
+from langchain.chains.constitutional_ai.models import ConstitutionalPrinciple
 from pydantic import BaseModel, Field
 from pydantic import validator
 from pathlib import Path
@@ -63,14 +67,41 @@ class GraphModel():
         def get_page_content(documents):
             out = "\n".join(doc.page_content for doc in documents)
             return out
+        
+        ethical_principle = ConstitutionalPrinciple(
+            name="Ethical Principle",
+            critique_request="The model should be polite and never insult the user",
+            revision_request="Rewrite the model's output to be polite.",
+        )
+
+        game_image_principle = ConstitutionalPrinciple(
+            name="Game Image Principle",
+            critique_request="The model should never say anything bad about the Genshin Impact game. It can say bad things about characters, but it should not critique the game itself",
+            revision_request="Rewrite the model's output discarding all the bad information about the Genshin Impact game.",
+        )
 
         prompt = PromptTemplate(input_variables=["context", "question"],  template=Path("prompts/generation.prompt").read_text())
-        chain = prompt | self.llm | StrOutputParser()
-        generation = chain.invoke({"context": get_page_content(documents), "question": question})
+
+        chain = LLMChain(
+            llm=self.llm,
+            prompt=prompt,
+            output_parser=StrOutputParser()
+        )
+
+        constitutional_chain = ConstitutionalChain.from_llm(
+            llm=self.llm,
+            prompt=prompt,
+            chain=chain,
+            constitutional_principles=[ethical_principle, game_image_principle],
+            verbose=False
+        )
+
+        generation = constitutional_chain.run(context=get_page_content(documents), question=question)
 
         return {"keys": {"documents": documents, "question": question, "generation": generation}}
     
     def grade_docs(self, state):
+        print("---GRAGE---")
         class GraderOut(BaseModel):
             grade: float = Field(desctiption="Grade that describes the document relevance; range[0, 1]",
                                  ge = 0, le = 1)
@@ -82,6 +113,7 @@ class GraphModel():
                 return score
 
         output_parser = PydanticOutputParser(pydantic_object=GraderOut)
+        retry_parser = RetryWithErrorOutputParser.from_llm(parser=output_parser, llm=self.llm)
 
         state_dict = state["keys"]
         question = state_dict["question"]
@@ -91,12 +123,17 @@ class GraphModel():
                                 template=Path("prompts/grader.prompt").read_text(),
                                 partial_variables={"format_instructions": output_parser.get_format_instructions()})
 
-        chain = prompt | self.llm | output_parser
+        chain = prompt | self.llm
 
         filtered_docs = []        
         grades = []
         for doc in documents:
-            grade = chain.invoke({"document": doc.page_content, "question": question, "format_instruction": output_parser.get_format_instructions()})
+            try:
+                response = chain.invoke({"document": doc.page_content, "question": question})
+                grade = output_parser.parse(response.content)
+            except:
+                grade = retry_parser.parse_with_prompt(response.content, prompt.format_prompt(document=doc.page_content, question=question))
+
             grades.append(grade.grade)
             if grade.grade >= self.low_bound:
                 filtered_docs.append(doc)
