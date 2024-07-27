@@ -101,7 +101,6 @@ class GraphModel():
         return {"keys": {"documents": documents, "question": question, "generation": generation}}
     
     def grade_docs(self, state):
-        print("---GRAGE---")
         class GraderOut(BaseModel):
             grade: float = Field(desctiption="Grade that describes the document relevance; range[0, 1]",
                                  ge = 0, le = 1)
