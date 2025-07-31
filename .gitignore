@@ -1,13 +1,13 @@
+# Python artifacts
 __pycache__/
-.chainlit/
 
-# Ignore environment variables
+# Environment variables
 .env
 
-.chainlit
-
+# Chainlit
+.chainlit/
 .files
-
-.DS_Store
-
 chainlit.md
+
+# macOS
+.DS_Store
